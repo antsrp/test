@@ -1,0 +1,10 @@
+version: "4.7.1"
+services:
+  postgres:
+    image: postgres:15.0
+    environment:
+      POSTGRES_DB: "aedb"
+      POSTGRES_USER: "super"
+      POSTGRES_PASSWORD: "1212"
+    ports:
+      - "5432:5432"
