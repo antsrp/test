@@ -1,0 +1,9 @@
+psql:
+ host: "localhost"
+ port: 15432
+ user: "super"
+ password: "1212"
+ db: "aedb"
+
+limitations:
+ operations_per_page: 5

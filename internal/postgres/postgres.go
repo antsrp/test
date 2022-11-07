@@ -27,6 +27,19 @@ const (
 	dbname   = "aedb"
 )
 
+type PSQLConfig struct {
+	Database struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		DBName   string `yaml:"db"`
+	} `yaml:"psql"`
+	Limitations struct {
+		PageLimit int `yaml:"operations_per_page"`
+	} `yaml:"limitations"`
+}
+
 // Dbsql struct for connection
 type Dbsql struct {
 	DB     *sql.DB
@@ -34,13 +47,12 @@ type Dbsql struct {
 	Open   bool
 }
 
-// SQLConnect function to open connection
-func SQLConnect(log *zap.Logger) (*Dbsql, error) {
+func SQLConnect(config *PSQLConfig, log *zap.Logger) (*Dbsql, error) {
 	var d Dbsql
 
 	dsn := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, dbuser, password, dbname)
+		config.Database.Host, config.Database.Port, config.Database.User, config.Database.Password, config.Database.DBName)
 
 	db, err := sql.Open("postgres", dsn)
 

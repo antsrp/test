@@ -29,7 +29,9 @@ func TestMain(m *testing.M) {
 		log.Fatal("Can't create zap logger: ", err)
 	}
 
-	db, err := postgres.SQLConnect(logger)
+	cfg := ParseDBConfig(logger)
+
+	db, err := postgres.SQLConnect(cfg, logger)
 	if err != nil {
 		logger.Sugar().Fatal("Can't create db: ", err)
 	}
@@ -38,7 +40,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		logger.Sugar().Fatal("Can't create a user storage: ", err)
 	}
-	rs, err := postgres.CreateTransactionStorage(db)
+	rs, err := postgres.CreateTransactionStorage(db, cfg.Limitations.PageLimit)
 	if err != nil {
 		logger.Sugar().Fatal("Can't create a transaction storage: ", err)
 	}

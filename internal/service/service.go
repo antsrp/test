@@ -15,11 +15,17 @@ import (
 
 const (
 	REPORTS_RELATIVE_PATH = "../../reports"
+	CONFIGS_RELATIVE_PATH = "../../configs"
 )
 
 func getPathToReportsFolder() string {
 	curPath, _ := os.Getwd()
 	return filepath.Join(curPath, REPORTS_RELATIVE_PATH)
+}
+
+func getPathToConfigsFolder() string {
+	curPath, _ := os.Getwd()
+	return filepath.Join(curPath, CONFIGS_RELATIVE_PATH)
 }
 
 type Service struct {

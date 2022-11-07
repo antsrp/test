@@ -15,17 +15,20 @@ func main() {
 		log.Fatal("Can't create zap logger: ", err)
 	}
 
-	db, err := postgres.SQLConnect(logger)
+	cfg := service.ParseDBConfig(logger)
+
+	db, err := postgres.SQLConnect(cfg, logger)
 	if err != nil {
 		logger.Sugar().Fatal("Can't create db: ", err)
 	}
+
 	userStorage, err := postgres.CreateUserStorage(db)
 	if err != nil {
 		logger.Sugar().Fatal("Can't create a user storage", err)
 	}
 	defer handleCloser(logger, "user storage", userStorage)
 
-	transactionStorage, err := postgres.CreateTransactionStorage(db)
+	transactionStorage, err := postgres.CreateTransactionStorage(db, cfg.Limitations.PageLimit)
 	if err != nil {
 		logger.Sugar().Fatal("Can't create a user storage", err)
 	}

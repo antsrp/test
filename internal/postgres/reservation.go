@@ -35,7 +35,7 @@ const (
 	WHERE user_id = $1 AND is_completed = true
 	`
 
-	limitsQ = ` LIMIT 5 OFFSET $2`
+	limitsQ = ` LIMIT $2 OFFSET $3`
 
 	operationsDefaultWPagesQ    = operationsCarcassQ + limitsQ
 	operationsByDateDESCQ       = operationsCarcassQ + ORDER_BY_DATE + SORT_DESC
@@ -47,17 +47,11 @@ const (
 	operationsByCostWPagesDESCQ = operationsByCostDESCQ + limitsQ
 	operationsByCostWPagesASCQ  = operationsByCostASCQ + limitsQ
 
-	/*operationsByDateDESCQ = operationsCarcassQ + `ORDER BY closed_at DESC LIMIT 5 OFFSET $2;`
-	operationsByDateASCQ  = operationsCarcassQ + `ORDER BY closed_at ASC LIMIT 5 OFFSET $2;`
-	operationsByCostDESCQ = operationsCarcassQ + `ORDER BY cost DESC LIMIT 5 OFFSET $2;`
-	operationsByCostASCQ  = operationsCarcassQ + `ORDER BY cost ASC LIMIT 5 OFFSET $2;` */
-
 	ClosedTransaction = "Transaction is already closed"
 	DifferentCosts    = "Different costs"
 	OrderNotFound     = "Wrong order"
 	SortParamNotFound = "Wrong sorting param"
 
-	PAGE_LIMIT    = 5
 	SORT_ASC      = `ASC`
 	SORT_DESC     = `DESC`
 	SORT_DATE     = `date`
@@ -95,9 +89,11 @@ type TransactionStorage struct {
 	operationsDateWPagesAscStmt  *sql.Stmt
 	operationsCostWPagesDescStmt *sql.Stmt
 	operationsCostWPagesAscStmt  *sql.Stmt
+
+	pageLimit int
 }
 
-func CreateTransactionStorage(d *Dbsql) (*TransactionStorage, error) {
+func CreateTransactionStorage(d *Dbsql, limit int) (*TransactionStorage, error) {
 	s := &TransactionStorage{StatementStorage: Create(d)}
 
 	stmts := []stmt{
@@ -124,6 +120,8 @@ func CreateTransactionStorage(d *Dbsql) (*TransactionStorage, error) {
 	if err := s.initStatements(stmts); err != nil {
 		return nil, errors.Wrap(err, "can't init statements")
 	}
+
+	s.pageLimit = limit
 
 	return s, nil
 }
@@ -326,10 +324,10 @@ func (s *TransactionStorage) GetOperations(user_id, page int, sortby, direction 
 	}
 
 	if page > 0 {
-		offset = (page - 1) * PAGE_LIMIT
+		offset = (page - 1) * s.pageLimit
 	}
 
-	rows, err := stmt.Query(&user_id, &offset)
+	rows, err := stmt.Query(&user_id, &s.pageLimit, &offset)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get operations with such parameters")
 	}
