@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	//REPORTS_RELATIVE_PATH = "../../reports"
-	//CONFIGS_RELATIVE_PATH = "../../configs"
 	REPORTS_RELATIVE_PATH = "reports"
 	CONFIGS_RELATIVE_PATH = "configs"
 )
