@@ -33,4 +33,5 @@ type Storage interface {
 	GetAmountOfReservedCash(int) (uint64, error)
 	FindTransaction(CashReservation) (int, error)
 	CloseTransaction(int, *time.Time, chan bool, chan bool, chan error)
+	DeleteAllTransactions() error
 }

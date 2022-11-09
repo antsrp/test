@@ -20,6 +20,8 @@ const (
 	updateTransactionQ       = `UPDATE transactions 
 	SET closed_at = $1, is_completed = true
 	WHERE chain_id = $2`
+	deleteChainsQ       = "DELETE FROM chains WHERE id > 0"
+	deleteTransactionsQ = "DELETE FROM transactions WHERE id > 0"
 
 	summaryOfMonthQ = `SELECT favors.name, SUM(cost)
 	FROM transactions
@@ -37,6 +39,7 @@ const (
 
 	limitsQ = ` LIMIT $2 OFFSET $3`
 
+	operationsDefaultQ          = operationsCarcassQ + `ORDER BY transactions.id`
 	operationsDefaultWPagesQ    = operationsCarcassQ + limitsQ
 	operationsByDateDESCQ       = operationsCarcassQ + ORDER_BY_DATE + SORT_DESC
 	operationsByDateASCQ        = operationsCarcassQ + ORDER_BY_DATE + SORT_ASC
@@ -50,6 +53,7 @@ const (
 	ClosedTransaction = "Transaction is already closed"
 	DifferentCosts    = "Different costs"
 	OrderNotFound     = "Wrong order"
+	UserNotFound      = "User not found"
 	SortParamNotFound = "Wrong sorting param"
 
 	SORT_ASC      = `ASC`
@@ -64,6 +68,7 @@ var (
 	ErrClosedTransaction        = errors.New(ClosedTransaction)
 	ErrDifferentCosts           = errors.New(DifferentCosts)
 	ErrOrderNotFound            = errors.New(OrderNotFound)
+	ErrUserNotFound             = errors.New(UserNotFound)
 	ErrSortParamNotFound        = errors.New(SortParamNotFound)
 	ErrOperationOfDifferentUser = errors.New(OrderNotFound)
 )
@@ -89,6 +94,8 @@ type TransactionStorage struct {
 	operationsDateWPagesAscStmt  *sql.Stmt
 	operationsCostWPagesDescStmt *sql.Stmt
 	operationsCostWPagesAscStmt  *sql.Stmt
+	deleteChainsStmt             *sql.Stmt
+	deleteTransactionsStmt       *sql.Stmt
 
 	pageLimit int
 }
@@ -105,7 +112,7 @@ func CreateTransactionStorage(d *Dbsql, limit int) (*TransactionStorage, error) 
 		{Query: findTransactionQ, Dst: &s.findTransactionStmt},
 		{Query: updateTransactionQ, Dst: &s.updateTransactionStmt},
 		{Query: summaryOfMonthQ, Dst: &s.getMonthSummaryStmt},
-		{Query: operationsCarcassQ, Dst: &s.operationsDefaultStmt},
+		{Query: operationsDefaultQ, Dst: &s.operationsDefaultStmt},
 		{Query: operationsByDateDESCQ, Dst: &s.operationsDateDescStmt},
 		{Query: operationsByDateASCQ, Dst: &s.operationsDateAscStmt},
 		{Query: operationsByCostDESCQ, Dst: &s.operationsCostDescStmt},
@@ -115,6 +122,8 @@ func CreateTransactionStorage(d *Dbsql, limit int) (*TransactionStorage, error) 
 		{Query: operationsByDateWPagesASCQ, Dst: &s.operationsDateWPagesAscStmt},
 		{Query: operationsByCostWPagesDESCQ, Dst: &s.operationsCostWPagesDescStmt},
 		{Query: operationsByCostWPagesASCQ, Dst: &s.operationsCostWPagesAscStmt},
+		{Query: deleteChainsQ, Dst: &s.deleteChainsStmt},
+		{Query: deleteTransactionsQ, Dst: &s.deleteTransactionsStmt},
 	}
 
 	if err := s.initStatements(stmts); err != nil {
@@ -350,4 +359,26 @@ func (s *TransactionStorage) GetOperations(user_id, page int, sortby, direction 
 	}
 
 	return ops, nil
+}
+
+func (s *TransactionStorage) DeleteAllTransactions() error {
+
+	tx, err := s.db.DB.Begin()
+	if err != nil {
+		return errors.Wrap(err, "can't create transaction")
+	}
+
+	if _, err := tx.Stmt(s.deleteTransactionsStmt).Exec(); err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "can't delete transactions")
+	}
+
+	if _, err := tx.Stmt(s.deleteChainsStmt).Exec(); err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "can't delete chains")
+	}
+
+	tx.Commit()
+
+	return nil
 }

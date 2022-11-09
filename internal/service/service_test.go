@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("Can't create zap logger: ", err)
 	}
 
-	cfg := ParseDBConfig(logger)
+	cfg := ParseDBConfigTest(logger)
 
 	db, err := postgres.SQLConnect(cfg, logger)
 	if err != nil {
@@ -44,7 +44,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		logger.Sugar().Fatal("Can't create a transaction storage: ", err)
 	}
-	service = CreateNewService(us, rs)
+	service = CreateNewServiceTest(us, rs)
+	if err := refreshTables(); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 
 	code := m.Run()
 
@@ -79,6 +83,16 @@ func (o Operation) String() string {
 	default:
 		return `EMPTY`
 	}
+}
+
+func refreshTables() error {
+	if err := service.transactionStorage.DeleteAllTransactions(); err != nil {
+		return err
+	}
+	if err := service.userStorage.DeleteAllUsers(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func TestService(t *testing.T) {
@@ -228,28 +242,23 @@ func TestService(t *testing.T) {
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
-		//{Error: nil, Message: OperationSuccessful, Data: `{"balance": 600}`},
 		{Error: nil, Message: OperationSuccessful, Data: Balance{Value: 600}},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
-		//{Error: nil, Message: OperationSuccessful, Data: `{"balance": 1400}`},
 		{Error: nil, Message: OperationSuccessful, Data: Balance{Value: 1400}},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: nil, Message: OperationSuccessful},
-		//{Error: nil, Message: OperationSuccessful, Data: `{"balance": 500}`},
 		{Error: nil, Message: OperationSuccessful, Data: Balance{Value: 500}},
 		{Error: ErrOrderNotFound, Message: OrderNotFound},
 		{Error: ErrDifferentCosts, Message: ErrDifferentCosts.Error()},
 		{Error: ErrOrderNotFound, Message: OperationOfDifferentUser},
 		{Error: nil, Message: OperationSuccessful},
 		{Error: ErrAlreadyClosedTransaction, Message: AlreadyClosedTransaction},
-		//{Error: nil, Message: OperationSuccessful, Data: `{"balance": 100}`},
 		{Error: nil, Message: OperationSuccessful, Data: Balance{Value: 100}},
 		{Error: ErrInsufficientFunds, Message: ErrInsufficientFunds.Error()},
-		//{Error: nil, Message: OperationSuccessful, Data: `{"balance": 100}`},
 		{Error: nil, Message: OperationSuccessful, Data: Balance{Value: 100}},
 	}
 
@@ -686,7 +695,7 @@ Favor 3;200
 
 	result := service.GetSummaryLogic(year, month)
 
-	csv := fmt.Sprintf("%s\\%s", getPathToReportsFolder(), result.Data)
+	csv := fmt.Sprintf("%s\\%s", getPathToReportsFolderTest(), result.Data)
 
 	b, err := os.ReadFile(csv)
 	if err != nil {

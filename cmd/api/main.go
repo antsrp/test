@@ -1,21 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/antsrp/balance_service/internal/postgres"
 	"github.com/antsrp/balance_service/internal/service"
 	"go.uber.org/zap"
+
+	_ "github.com/antsrp/balance_service/docs"
 )
 
+// @title           User balance
+// @version         1.0
+// @description     User balance service.
+// @termsOfService  http://swagger.io/terms/
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+// @host      localhost:5000
+// @BasePath  /api/v1
 func main() {
+
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatal("Can't create zap logger: ", err)
 	}
 
 	cfg := service.ParseDBConfig(logger)
+	fmt.Printf("on start, db: %v\n", cfg.Database.DBName)
 
 	db, err := postgres.SQLConnect(cfg, logger)
 	if err != nil {

@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	REPORTS_RELATIVE_PATH = "../../reports"
-	CONFIGS_RELATIVE_PATH = "../../configs"
+	//REPORTS_RELATIVE_PATH = "../../reports"
+	//CONFIGS_RELATIVE_PATH = "../../configs"
+	REPORTS_RELATIVE_PATH = "reports"
+	CONFIGS_RELATIVE_PATH = "configs"
 )
 
 func getPathToReportsFolder() string {
@@ -28,13 +30,39 @@ func getPathToConfigsFolder() string {
 	return filepath.Join(curPath, CONFIGS_RELATIVE_PATH)
 }
 
+func getPathToReportsFolderTest() string {
+	curPath, _ := os.Getwd()
+	return filepath.Join(curPath, "../../"+REPORTS_RELATIVE_PATH)
+}
+
+func getPathToConfigsFolderTest() string {
+	curPath, _ := os.Getwd()
+	return filepath.Join(curPath, "../../"+CONFIGS_RELATIVE_PATH)
+}
+
 type Service struct {
 	userStorage        *postgres.UserStorage
 	transactionStorage *postgres.TransactionStorage
+	reportsPath        string
+	configsPath        string
 }
 
 func CreateNewService(us *postgres.UserStorage, ts *postgres.TransactionStorage) *Service {
-	return &Service{userStorage: us, transactionStorage: ts}
+	return &Service{
+		userStorage:        us,
+		transactionStorage: ts,
+		reportsPath:        getPathToReportsFolder(),
+		configsPath:        getPathToConfigsFolder(),
+	}
+}
+
+func CreateNewServiceTest(us *postgres.UserStorage, ts *postgres.TransactionStorage) *Service {
+	return &Service{
+		userStorage:        us,
+		transactionStorage: ts,
+		reportsPath:        getPathToReportsFolderTest(),
+		configsPath:        getPathToConfigsFolderTest(),
+	}
 }
 
 func (s *Service) GetUserBalanceLogic(data string) *Response {
@@ -45,10 +73,13 @@ func (s *Service) GetUserBalanceLogic(data string) *Response {
 	resp := &Response{Message: OperationSuccessful}
 	if data, err := s.userStorage.GetUserBalance(id); err != nil {
 		resp.Error = err
-		resp.Message = OperationUnsuccessfulInternalError
+		if err == postgres.ErrUserNotFound {
+			resp.Message = UserNotFound
+		} else {
+			resp.Message = OperationUnsuccessfulInternalError
+		}
 	} else {
 		resp.Data = Balance{Value: data}
-		//resp.Data = fmt.Sprintf(`{"balance": %v}`, data)
 	}
 	return resp
 }
@@ -162,7 +193,7 @@ func (s *Service) GetSummaryLogic(year, month int) *Response {
 	if err != nil {
 		return &Response{Error: err, Message: OperationUnsuccessfulInternalError}
 	}
-	fn, err := reports.WriteToCSV(sum, getPathToReportsFolder())
+	fn, err := reports.WriteToCSV(sum, s.reportsPath)
 	if err != nil {
 		return &Response{Error: err, Message: OperationUnsuccessfulInternalError}
 	}

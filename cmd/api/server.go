@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -29,6 +30,7 @@ func startServer(logger *zap.Logger, r http.Handler, sigquit chan os.Signal) {
 
 	go func() {
 		<-sigquit
+		fmt.Println("server to shutdown")
 
 		if err := srv.Shutdown(context.Background()); err != nil {
 			logger.Sugar().Fatalf("could not shutdown server: %s", err)

@@ -19,7 +19,7 @@ func WriteToCSV(summary []SummaryCSV, path string) (string, error) {
 
 	name := fmt.Sprintf("%v.csv", t)
 
-	f, err := os.Create(path + "\\" + name)
+	f, err := os.Create(path + "//" + name)
 	if err != nil {
 		return "", errors.Wrap(err, "can't create csv file")
 	}

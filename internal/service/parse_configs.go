@@ -10,7 +10,25 @@ import (
 )
 
 func ParseDBConfig(logger *zap.Logger) *postgres.PSQLConfig {
-	f, err := os.Open(fmt.Sprintf("%s\\%s", getPathToConfigsFolder(), "db_config.yaml"))
+	f, err := os.Open(fmt.Sprintf("%s//%s", getPathToConfigsFolder(), "db_config.yaml"))
+	if err != nil {
+		logger.Sugar().Fatal("Can't read config of db: ", err)
+	}
+	defer f.Close()
+
+	var cfg postgres.PSQLConfig
+
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		logger.Sugar().Fatal("Can't parse config of db: ", err)
+	}
+
+	return &cfg
+}
+
+func ParseDBConfigTest(logger *zap.Logger) *postgres.PSQLConfig {
+	f, err := os.Open(fmt.Sprintf("%s//%s", getPathToConfigsFolderTest(), "config_test.yaml"))
 	if err != nil {
 		logger.Sugar().Fatal("Can't read config of db: ", err)
 	}

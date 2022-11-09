@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type URLPath struct {
@@ -45,6 +47,9 @@ func (h Handler) Routes() chi.Router {
 		r.Get("/api/v1/operations", h.getOperations)
 		r.Get("/api/v1/summary", h.getSummary)
 		r.Handle("/reports/*", http.StripPrefix("/reports/", fileServer))
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+		))
 	})
 
 	return r
@@ -66,7 +71,7 @@ func (h Handler) httpCodeByMessage(msg string, defaultCode int) int {
 		code = http.StatusInternalServerError
 	case service.DifferentCosts, service.InsufficientFunds:
 		code = http.StatusUnprocessableEntity
-	case service.OrderNotFound, service.UserNotFound, service.InvalidData, service.InvalidDate, service.OperationOfDifferentUser:
+	case service.OrderNotFound, service.UserNotFound, service.InvalidData, service.InvalidDate, service.OperationOfDifferentUser, service.AlreadyClosedTransaction:
 		code = http.StatusBadRequest
 	default:
 		code = defaultCode
@@ -95,6 +100,14 @@ func (h Handler) writeResponse(w http.ResponseWriter, resp *service.Response, de
 	}
 }
 
+// @Summary Get user balance
+// @Description Get user balance by id
+// @Tags Routes
+// @Produce json
+// @Param user_id query string true "id of user"
+// @Success 200 {object} service.Response
+// @Failure 400,500 {object} service.Response
+// @Router /get-balance [get]
 func (h Handler) getBalance(w http.ResponseWriter, r *http.Request) {
 	user_id := r.URL.Query().Get("user_id")
 
@@ -103,6 +116,15 @@ func (h Handler) getBalance(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, resp, http.StatusOK)
 }
 
+// @Summary Add user balance
+// @Description Add balance of user by the amount of "balance" parameter
+// @Tags Routes
+// @Accept json
+// @Produce json
+// @Param input body models.AddBalanceRequest true "information of operation to add balance"
+// @Success 202 {object} service.Response
+// @Failure 400,500 {object} service.Response
+// @Router /add-balance [post]
 func (h Handler) addBalance(w http.ResponseWriter, r *http.Request) {
 	body := h.readBody(r)
 	defer r.Body.Close()
@@ -112,6 +134,15 @@ func (h Handler) addBalance(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, resp, http.StatusAccepted)
 }
 
+// @Summary Get revenue of operation
+// @Description Get revenue of operation that started before
+// @Tags Routes
+// @Accept json
+// @Produce json
+// @Param input body models.RevenueRequest true "information of operation to get revenue of"
+// @Success 202 {object} service.Response
+// @Failure 400,500 {object} service.Response
+// @Router /get-revenue [put]
 func (h Handler) getRevenue(w http.ResponseWriter, r *http.Request) {
 	body := h.readBody(r)
 	defer r.Body.Close()
@@ -121,6 +152,15 @@ func (h Handler) getRevenue(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, resp, http.StatusOK)
 }
 
+// @Summary Reserve cash for operation
+// @Description Reserve cash for the subsequent operation
+// @Tags Routes
+// @Accept json
+// @Produce json
+// @Param input body models.ReserveRequest true "information of operation reserve"
+// @Success 202 {object} service.Response
+// @Failure 400,422,500 {object} service.Response
+// @Router /reserve [post]
 func (h Handler) reserveCash(w http.ResponseWriter, r *http.Request) {
 	body := h.readBody(r)
 	defer r.Body.Close()
@@ -130,6 +170,15 @@ func (h Handler) reserveCash(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, resp, http.StatusAccepted)
 }
 
+// @Summary Get summary
+// @Description Get summary of revenue grouped by services
+// @Tags Routes
+// @Produce json
+// @Param year query int true "year to collect the report"
+// @Param month query int true "month to collect the report"
+// @Success 200 {object} service.Response
+// @Failure 400,500 {object} service.Response
+// @Router /summary [get]
 func (h Handler) getSummary(w http.ResponseWriter, r *http.Request) {
 
 	month, err := strconv.Atoi(r.URL.Query().Get("month"))
@@ -155,6 +204,17 @@ func (h Handler) getSummary(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, resp, http.StatusOK)
 }
 
+// @Summary Get operations of user
+// @Description Show operations of interest to him
+// @Tags Routes
+// @Produce json
+// @Param user_id query int true "id of user"
+// @Param page query int false "page of operation's report; if not specified, operations are returned all together"
+// @Param sort query string false "date, sum"
+// @Param direction query string false "ASC, DESC"
+// @Success 200 {object} service.Response
+// @Failure 400,500 {object} service.Response
+// @Router /operations [get]
 func (h Handler) getOperations(w http.ResponseWriter, r *http.Request) {
 	var id, page int
 	id, err := strconv.Atoi(r.URL.Query().Get("user_id"))

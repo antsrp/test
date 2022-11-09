@@ -10,10 +10,11 @@ import (
 type UserStorage struct {
 	StatementStorage
 
-	createStmt        *sql.Stmt
-	findUserStmt      *sql.Stmt
-	findBalanceStmt   *sql.Stmt
-	updateBalanceStmt *sql.Stmt
+	createStmt         *sql.Stmt
+	findUserStmt       *sql.Stmt
+	findBalanceStmt    *sql.Stmt
+	updateBalanceStmt  *sql.Stmt
+	deleteAllUsersStmt *sql.Stmt
 }
 
 var _ user.Storage = &UserStorage{}
@@ -23,6 +24,7 @@ const (
 	findUserByIDQ      = "SELECT id, balance FROM users WHERE id = $1"
 	findUserBalanceQ   = "SELECT balance FROM users WHERE id = $1"
 	updateUserBalanceQ = "UPDATE users SET balance = $1 WHERE id = $2"
+	deleteAllUsersQ    = "DELETE FROM users WHERE id > 0"
 )
 
 // CreateUserStorage creates new user storage
@@ -34,6 +36,7 @@ func CreateUserStorage(d *Dbsql) (*UserStorage, error) {
 		{Query: findUserBalanceQ, Dst: &s.findBalanceStmt},
 		{Query: findUserByIDQ, Dst: &s.findUserStmt},
 		{Query: updateUserBalanceQ, Dst: &s.updateBalanceStmt},
+		{Query: deleteAllUsersQ, Dst: &s.deleteAllUsersStmt},
 	}
 
 	if err := s.initStatements(stmts); err != nil {
@@ -72,6 +75,9 @@ func (s *UserStorage) FindUser(id int) (*user.User, error) {
 func (s *UserStorage) GetUserBalance(id int) (uint64, error) {
 	var balance uint64
 	if err := s.findBalanceStmt.QueryRow(&id).Scan(&balance); err != nil {
+		if err == sql.ErrNoRows {
+			return 0, ErrUserNotFound
+		}
 		return balance, errors.Wrapf(err, "cannot get balance of user")
 	}
 	return balance, nil
@@ -109,4 +115,13 @@ func (s *UserStorage) DecreaseBalanceChained(id int, deductable uint64, in, out 
 	}
 	tx.Commit()
 	result <- nil
+}
+
+func (s *UserStorage) DeleteAllUsers() error {
+
+	if _, err := s.deleteAllUsersStmt.Exec(); err != nil {
+		return errors.Wrap(err, "can't delete users from db")
+	}
+
+	return nil
 }

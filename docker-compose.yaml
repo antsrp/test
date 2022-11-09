@@ -1,10 +1,29 @@
 version: "4.7.1"
+
 services:
-  postgres:
-    image: postgres:15.0
+  balance-service:
+     build: .
+     container_name: bs
+     ports:
+     - 5000:5000
+     depends_on:
+     - db
+
+  db:
+    image: db
+    container_name: psql_db
     environment:
       POSTGRES_DB: "aedb"
       POSTGRES_USER: "super"
       POSTGRES_PASSWORD: "1212"
     ports:
       - "5432:5432"
+  db_test:
+    image: db
+    container_name: psql_db_tests
+    environment:
+      POSTGRES_DB: "aedb"
+      POSTGRES_USER: "super"
+      POSTGRES_PASSWORD: "1212"
+    ports:
+      - "15432:5432"

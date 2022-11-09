@@ -14,4 +14,5 @@ type Storage interface {
 	FindUser(id int) (*User, error)
 	GetUserBalance(id int) (uint64, error)
 	UpdateUserBalance(*User) error
+	DeleteAllUsers() error
 }
