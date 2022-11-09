@@ -9,4 +9,3 @@ EXPOSE 5000
 RUN go mod download
 RUN go build -o main ./cmd/api
 ENTRYPOINT ["./main"]
-#ENTRYPOINT ["tail", "-f", "/dev/null"]

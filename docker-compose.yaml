@@ -20,13 +20,3 @@ services:
       POSTGRES_PASSWORD: "1212"
     ports:
       - "5432:5432"
-  db_test:
-    build: 
-     context: db
-    container_name: psql_db_tests
-    environment:
-      POSTGRES_DB: "aedb"
-      POSTGRES_USER: "super"
-      POSTGRES_PASSWORD: "1212"
-    ports:
-      - "15432:5432"

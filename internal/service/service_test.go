@@ -695,7 +695,7 @@ Favor 3;200
 
 	result := service.GetSummaryLogic(year, month)
 
-	csv := fmt.Sprintf("%s\\%s", getPathToReportsFolderTest(), result.Data)
+	csv := fmt.Sprintf("%s//%s", getPathToReportsFolderTest(), result.Data)
 
 	b, err := os.ReadFile(csv)
 	if err != nil {

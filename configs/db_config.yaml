@@ -1,6 +1,4 @@
 psql:
- #host: "localhost"
- #port: 15432
  host: "psql_db"
  port: 5432
  user: "super"

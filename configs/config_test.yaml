@@ -1,8 +1,6 @@
 psql:
- #host: "localhost"
- #port: 16432
- host: "psql_db_tests"
- port: 15432
+ host: "psql_db"
+ port: 5432
  user: "super"
  password: "1212"
  db: "aedb"
