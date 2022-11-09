@@ -27,7 +27,6 @@ func NewTransaction(id, user_id int, direction string, cost uint64, comment stri
 }
 
 type Storage interface {
-	//Create(int, int, int, uint64) error
 	CreateIn(int, *time.Time, uint64, string) error
 	CreateOut(int, int, int, uint64, string) error
 	GetAmountOfReservedCash(int) (uint64, error)
