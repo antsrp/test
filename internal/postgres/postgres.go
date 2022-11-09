@@ -33,10 +33,6 @@ type Dbsql struct {
 func SQLConnect(config *PSQLConfig, log *zap.Logger) (*Dbsql, error) {
 	var d Dbsql
 
-	/*dsn := fmt.Sprintf("host=%s port=%d user=%s "+
-	"password=%s dbname=%s sslmode=disable",
-	config.Database.Host, config.Database.Port, config.Database.User, config.Database.Password, config.Database.DBName)*/
-
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.Database.User, config.Database.Password, config.Database.Host, config.Database.Port, config.Database.DBName)
 
