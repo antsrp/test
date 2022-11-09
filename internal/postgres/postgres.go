@@ -10,23 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-/*const (
-	host     = "localhost"
-	port     = 5432
-	dbuser   = "postgres"
-	password = "1212"
-	dbname   = "Avito_entrance"
-)*/
-
-// docker container
-const (
-	host     = "localhost"
-	port     = 15432
-	dbuser   = "super"
-	password = "1212"
-	dbname   = "aedb"
-)
-
 type PSQLConfig struct {
 	Database struct {
 		Host     string `yaml:"host"`
@@ -56,6 +39,8 @@ func SQLConnect(config *PSQLConfig, log *zap.Logger) (*Dbsql, error) {
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.Database.User, config.Database.Password, config.Database.Host, config.Database.Port, config.Database.DBName)
+
+	fmt.Printf("tries to connect to: %s\n", dsn)
 
 	db, err := sql.Open("postgres", dsn)
 

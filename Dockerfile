@@ -7,4 +7,6 @@ RUN apk --update --no-cache add postgresql-client
 RUN apk --update --no-cache add make
 EXPOSE 5000
 RUN go mod download
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+RUN go build -o main ./cmd/api
+ENTRYPOINT ["./main"]
+#ENTRYPOINT ["tail", "-f", "/dev/null"]

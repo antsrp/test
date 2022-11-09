@@ -4,13 +4,15 @@ services:
   balance-service:
      build: .
      container_name: bs
+     restart: on-failure
      ports:
      - 5000:5000
      depends_on:
      - db
 
   db:
-    image: db
+    build: 
+     context: db
     container_name: psql_db
     environment:
       POSTGRES_DB: "aedb"
@@ -19,7 +21,8 @@ services:
     ports:
       - "5432:5432"
   db_test:
-    image: db
+    build: 
+     context: db
     container_name: psql_db_tests
     environment:
       POSTGRES_DB: "aedb"
